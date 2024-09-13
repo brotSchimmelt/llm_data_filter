@@ -24,6 +24,8 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def read_data(path: str = "./data/new_dataset.parquet") -> pd.DataFrame:
+    print(f"Reading data from {path} ...")
+
     df = pd.read_parquet(path)
     df = df.head(10)
 
@@ -32,6 +34,7 @@ def read_data(path: str = "./data/new_dataset.parquet") -> pd.DataFrame:
 
 
 def load_model(model_name: str, seed: int = 42) -> VLLM:
+    print(f"Loading model {model_name} ...")
     model_settings = {
         "seed": seed,
         "quant": None,
@@ -74,6 +77,8 @@ def generate_output(model: VLLM, df: pd.DataFrame) -> pd.DataFrame:
 
     answer_choices = ["good", "bad"]
 
+    print(f"Generating predictions for {len(prompts)} examples ...")
+
     model_prediction = model.generate(
         prompts,
         generation_params,
@@ -84,8 +89,6 @@ def generate_output(model: VLLM, df: pd.DataFrame) -> pd.DataFrame:
     )
 
     ic(len(model_prediction)), ic(len(df))
-
-    assert len(model_prediction) == len(df)
 
     return pd.DataFrame({"model_prediction": model_prediction})
 
@@ -103,6 +106,7 @@ def get_generation_params(
 def save_output(
     df: pd.DataFrame, model_name: str, path: str = "./data/labeled_data_{}.parquet"
 ) -> None:
+    print("Saving labeled data ...")
     output_path = path.format(model_name)
 
     df.to_parquet(output_path)
