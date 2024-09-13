@@ -21,5 +21,5 @@ Select the model in the `run_script.sh` script.
 ```bash
 chmod +x run_script.sh
 
-./run_script.sh
+./run_script.sh <model_name>
 ```
