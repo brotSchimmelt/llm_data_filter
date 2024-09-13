@@ -1,4 +1,5 @@
 import argparse
+import os
 from typing import List
 
 import pandas as pd
@@ -27,9 +28,7 @@ def read_data(path: str = "./data/new_dataset.parquet") -> pd.DataFrame:
     print(f"Reading data from {path} ...")
 
     df = pd.read_parquet(path)
-    df = df.head(10)
-
-    ic(len(df))
+    print("len(df)", len(df))
     return df
 
 
@@ -70,7 +69,7 @@ def get_prompts(df: pd.DataFrame, template: str) -> List[str]:
     return prompts
 
 
-def generate_output(model: VLLM, df: pd.DataFrame) -> pd.DataFrame:
+def generate_output(model: VLLM, df: pd.DataFrame, model_name: str) -> pd.DataFrame:
     generation_params = get_generation_params(temp=0.0)
 
     prompts = get_prompts(df, template=CLASSIFY_PROMPT)
@@ -88,9 +87,11 @@ def generate_output(model: VLLM, df: pd.DataFrame) -> pd.DataFrame:
         return_type="str",
     )
 
-    ic(len(model_prediction)), ic(len(df))
+    print("len(pred), len(df)", len(model_prediction), len(df))
 
-    return pd.DataFrame({"model_prediction": model_prediction})
+    df[f"{model_name}_prediction"] = model_prediction
+
+    return df
 
 
 def get_generation_params(
@@ -109,23 +110,35 @@ def save_output(
     print("Saving labeled data ...")
     output_path = path.format(model_name)
 
-    df.to_parquet(output_path)
+    df.to_parquet(output_path, index=False)
 
     print(f"Saved {len(df)} labeled examples to {output_path}")
 
 
+def clean_up(model_name: str):
+    try:
+        os.remove(f"./data/labeled_data_{model_name}.parquet")
+        os.remove(f"./data/labeled_data_{model_name}.csv")
+    except FileNotFoundError:
+        pass
+
+
 def main(args: argparse.Namespace) -> None:
+    clean_up(args.model_name)
+
     df = read_data()
 
     model = load_model(args.model_name)
 
-    output = generate_output(model, df)
+    output = generate_output(model, df, args.model_name)
 
     save_output(output, args.model_name)
 
-    ic(output["model_prediction"].value_counts())
+    print("Value_counts", output[f"{args.model_name}_prediction"].value_counts())
 
 
 if __name__ == "__main__":
+    ic.enable() if os.getenv("IC_DEBUG") == "True" else ic.disable()
+
     args = parse_arguments()
     main(args)
