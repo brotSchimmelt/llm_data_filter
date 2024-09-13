@@ -59,19 +59,21 @@ def load_model(model_name: str, seed: int = 42) -> VLLM:
         "seed": seed,
         "quant": None,
         "max_logprobs": 4,
+        "num_gpus": 1,
     }
 
     if model_name == "mistral":
-        model_settings["name"] = "mistral-7b"
+        model_settings["name"] = "mistral"
         model_settings["model_path"] = "../models/mistral-7b-instruct-v02"
         model_settings["prompt_format"] = "llama2"
-        model_settings["num_gpus"] = 1
-    elif model_name == "command":
-        model_settings["name"] = "command-r"
-        model_settings["model_path"] = "../models/command-r-v01"
-        model_settings["prompt_format"] = "cohere"
-        model_settings["num_gpus"] = 2
-
+    elif model_name == "llama-3.1":
+        model_settings["name"] = "llama-3.1"
+        model_settings["model_path"] = "../models/llama3_1-8b-instruct"
+        model_settings["prompt_format"] = "llama3"
+    elif model_name == "gemma":
+        model_settings["name"] = "gemma-2"
+        model_settings["model_path"] = "../models/gemma-2-9b-it"
+        model_settings["prompt_format"] = "gemma"
     else:
         raise ValueError(f"Model {model_name} not supported.")
 
