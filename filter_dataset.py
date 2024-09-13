@@ -10,6 +10,7 @@ from prompt_components import CLASSIFY_PROMPT, SYSTEM_PROMPT
 
 
 def parse_arguments() -> argparse.Namespace:
+    """Simple argument parser for the script."""
     parser = argparse.ArgumentParser(
         description="This script runs an experiment using the specified model and saves the data."
     )
@@ -25,6 +26,14 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def read_data(path: str = "./data/new_dataset.parquet") -> pd.DataFrame:
+    """Read dataset from a given file path.
+
+    Args:
+        path (str, optional): Path to the dataset file. Defaults to "./data/new_dataset.parquet".
+
+    Returns:
+        pd.DataFrame: Loaded dataset.
+    """
     print(f"Reading data from {path} ...")
 
     df = pd.read_parquet(path)
@@ -33,6 +42,18 @@ def read_data(path: str = "./data/new_dataset.parquet") -> pd.DataFrame:
 
 
 def load_model(model_name: str, seed: int = 42) -> VLLM:
+    """Load the specified model with optional seed.
+
+    Args:
+        model_name (str): Name of the model to load.
+        seed (int, optional): Random seed for reproducibility. Defaults to 42.
+
+    Raises:
+        ValueError: If the model name is not supported.
+
+    Returns:
+        VLLM: Loaded model instance.
+    """
     print(f"Loading model {model_name} ...")
     model_settings = {
         "seed": seed,
@@ -58,6 +79,15 @@ def load_model(model_name: str, seed: int = 42) -> VLLM:
 
 
 def get_prompts(df: pd.DataFrame, template: str) -> List[str]:
+    """Generate prompts based on the DataFrame and a template.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame with revision data.
+        template (str): Template string for generating prompts.
+
+    Returns:
+        List[str]: List of formatted prompts.
+    """
     before_revisions = df["before_revision"].tolist()
     after_revisions = df["after_revision"].tolist()
 
@@ -70,6 +100,16 @@ def get_prompts(df: pd.DataFrame, template: str) -> List[str]:
 
 
 def generate_output(model: VLLM, df: pd.DataFrame, model_name: str) -> pd.DataFrame:
+    """Generate model predictions and append them to the DataFrame.
+
+    Args:
+        model (VLLM): Loaded model instance.
+        df (pd.DataFrame): DataFrame containing input data.
+        model_name (str): Name of the model used for generating output.
+
+    Returns:
+        pd.DataFrame: DataFrame with generated predictions.
+    """
     generation_params = get_generation_params(temp=0.0)
 
     prompts = get_prompts(df, template=CLASSIFY_PROMPT)
@@ -97,6 +137,16 @@ def generate_output(model: VLLM, df: pd.DataFrame, model_name: str) -> pd.DataFr
 def get_generation_params(
     temp: int, seed: int = 42, max_tokens: int = 32
 ) -> GenerationParams:
+    """Get the generation parameters for the model.
+
+    Args:
+        temp (int): Temperature for sampling.
+        seed (int, optional): Random seed for reproducibility. Defaults to 42.
+        max_tokens (int, optional): Maximum number of tokens to generate. Defaults to 32.
+
+    Returns:
+        GenerationParams: Generation parameters object.
+    """
     return GenerationParams(
         temperature=temp,
         seed=seed,
@@ -107,6 +157,13 @@ def get_generation_params(
 def save_output(
     df: pd.DataFrame, model_name: str, path: str = "./data/labeled_data_{}.parquet"
 ) -> None:
+    """Save the labeled data to a parquet file.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing the data to save.
+        model_name (str): Model name to use in the filename.
+        path (str, optional): File path template for saving. Defaults to "./data/labeled_data_{}.parquet".
+    """
     print("Saving labeled data ...")
     output_path = path.format(model_name)
 
@@ -115,7 +172,12 @@ def save_output(
     print(f"Saved {len(df)} labeled examples to {output_path}")
 
 
-def clean_up(model_name: str):
+def clean_up(model_name: str) -> None:
+    """Clean up generated files for the given model.
+
+    Args:
+        model_name (str): Name of the model for which files should be deleted.
+    """
     try:
         os.remove(f"./data/labeled_data_{model_name}.parquet")
         os.remove(f"./data/labeled_data_{model_name}.csv")
