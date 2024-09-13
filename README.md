@@ -14,12 +14,16 @@ pip install -e path/to/flex-infer
 
 ## Usage
 
-Set the model path in the `filter_dataset.py` file.
-
-Select the model in the `run_script.sh` script.
+Set the model paths in the `filter_dataset.py` file.
 
 ```bash
 chmod +x run_script.sh
 
 ./run_script.sh <model_name>
 ```
+
+Different models:
+
+- Llama-3.1 8B
+- Mistral-v2 7B
+- Gemma-2 9B
