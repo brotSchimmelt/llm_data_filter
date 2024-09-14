@@ -74,6 +74,16 @@ def load_model(model_name: str, seed: int = 42) -> VLLM:
         model_settings["name"] = "gemma-2"
         model_settings["model_path"] = "../models/gemma-2-9b-it"
         model_settings["prompt_format"] = "gemma"
+    elif model_name == "gemma-27":
+        model_settings["name"] = "gemma-2-27b"
+        model_settings["model_path"] = "../models/gemma-2-27b-it"
+        model_settings["prompt_format"] = "gemma"
+    elif model_name == "nemo":
+        model_settings["name"] = "mistral-nemo"
+        model_settings["model_path"] = "../models/mistral-nemo-instruct-12b"
+        model_settings["prompt_format"] = "llama2"
+        model_settings["max_model_len"] = 8192
+
     else:
         raise ValueError(f"Model {model_name} not supported.")
 
