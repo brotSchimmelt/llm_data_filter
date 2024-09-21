@@ -1,5 +1,6 @@
 import argparse
 import os
+from typing import List
 
 import pandas as pd
 from flex_infer import VLLM
@@ -9,7 +10,6 @@ from src.prompt_components import CLASSIFY_PROMPT, SYSTEM_PROMPT
 from src.utils import (
     clean_up,
     get_generation_params,
-    get_prompts,
     read_data,
     save_output,
 )
@@ -83,21 +83,29 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def generate_output(
-    model: VLLM, df: pd.DataFrame, model_name: str, temp: float = 0.0
+    model_name: str,
+    df: pd.DataFrame,
+    columns_to_use: List[str],
+    temp: float = 0.0,
+    template: str = CLASSIFY_PROMPT,
 ) -> pd.DataFrame:
     """Generate model predictions and append them to the DataFrame.
 
     Args:
-        model (VLLM): Loaded model instance.
-        df (pd.DataFrame): DataFrame containing input data.
         model_name (str): Name of the model used for generating output.
+        df (pd.DataFrame): DataFrame with data.
+        columns_to_use (List[str]): Columns to use for generating prompts.
+        temp (float, optional): Temperature for generation. Defaults to 0.0.
+        template (str, optional): Template for generating prompts. Defaults to CLASSIFY_PROMPT.
 
     Returns:
         pd.DataFrame: DataFrame with generated predictions.
     """
+    model = load_model(model_name)
+
     generation_params = get_generation_params(temp=temp)
 
-    prompts = get_prompts(df, template=CLASSIFY_PROMPT)
+    prompts = get_prompts(df, columns_to_use, template=template)
 
     answer_choices = ["good", "bad"]
 
@@ -119,14 +127,42 @@ def generate_output(
     return df
 
 
+def get_prompts(
+    df: pd.DataFrame, columns_to_use: List[str], template: str
+) -> List[str]:
+    """Generate prompts based on the DataFrame and a template.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame with revision data.
+        columns_to_use (List[str]): Columns to use for generating prompts.
+        template (str): Template string for generating prompts.
+
+    Returns:
+        List[str]: List of formatted prompts.
+    """
+    if len(columns_to_use) != 2:
+        raise ValueError("columns_to_use should contain exactly 2 columns")
+
+    text_1 = df[columns_to_use[0]].tolist()
+    text_2 = df[columns_to_use[1]].tolist()
+
+    prompts = []
+    for before, after in zip(text_1, text_2):
+        prompt = template.format(before, after)
+        prompts.append(prompt)
+
+    return prompts
+
+
 def main(args: argparse.Namespace) -> None:
     clean_up(args.model_name)
 
-    df = read_data("./data/input/revision_dataset.parquet")
+    # reads the dataset from data/input
+    df = read_data()
 
-    model = load_model(args.model_name)
-
-    output = generate_output(model, df, args.model_name, temp=0.0)
+    output = generate_output(
+        args.model_name, df, COLUMNS, temp=0.0, template=PROMPT_TEMPLATE
+    )
 
     save_output(output, args.model_name)
 
@@ -135,6 +171,12 @@ def main(args: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
     ic.enable() if os.getenv("IC_DEBUG") == "True" else ic.disable()
+
+    # set the columns to use for generating prompts
+    COLUMNS = ["before_revision", "after_revision"]
+
+    # set the prompt template
+    PROMPT_TEMPLATE = CLASSIFY_PROMPT
 
     args = parse_arguments()
     main(args)
