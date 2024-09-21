@@ -20,7 +20,7 @@ start_time=$(date +%s)
 export LOG_LEVEL="WARNING" # used for vLLM logging
 export IC_DEBUG="False"  # icecream print debugging
 export TOKENIZERS_PARALLELISM="false"  # for sentence-transformers
-export VLLM_ATTENTION_BACKEND=FLASHINFER  # for gemma
+# export VLLM_ATTENTION_BACKEND=FLASHINFER  # for gemma models
 
 python filter_dataset.py --model_name "$MODEL_NAME"
 
