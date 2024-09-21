@@ -37,23 +37,27 @@ def load_model(model_name: str, seed: int = 42) -> VLLM:
     }
 
     if model_name == "mistral":
-        model_settings["name"] = "mistral"
+        model_settings["name"] = "mistral-7b-v2"
         model_settings["model_path"] = "../models/mistral-7b-instruct-v02"
         model_settings["prompt_format"] = "llama2"
     elif model_name == "llama-3.1":
-        model_settings["name"] = "llama-3.1"
+        model_settings["name"] = "llama-3.1-8b"
         model_settings["model_path"] = "../models/llama3_1-8b-instruct"
         model_settings["prompt_format"] = "llama3"
-    elif model_name == "gemma":
-        model_settings["name"] = "gemma-2"
+    elif model_name == "gemma-9b":
+        model_settings["name"] = "gemma-2-9b"
         model_settings["model_path"] = "../models/gemma-2-9b-it"
         model_settings["prompt_format"] = "gemma"
-    elif model_name == "gemma-27":
+    elif model_name == "gemma-27b":
         model_settings["name"] = "gemma-2-27b"
         model_settings["model_path"] = "../models/gemma-2-27b-it"
         model_settings["prompt_format"] = "gemma"
+    elif model_name == "gemma-2b":
+        model_settings["name"] = "gemma-2b"
+        model_settings["model_path"] = "../models/gemma-2b-it"
+        model_settings["prompt_format"] = "gemma"
     elif model_name == "nemo":
-        model_settings["name"] = "mistral-nemo"
+        model_settings["name"] = "mistral-nemo-12b"
         model_settings["model_path"] = "../models/mistral-nemo-instruct-12b"
         model_settings["prompt_format"] = "llama2"
         model_settings["max_model_len"] = (
