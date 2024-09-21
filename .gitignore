@@ -163,6 +163,8 @@ cython_debug/
 
 data/*.parquet
 data/*.csv
+data/input/*.parquet
+data/input/*.csv
 _*.sh
 _*.py
 _*.txt
