@@ -2,17 +2,38 @@ from unittest import mock
 
 import pandas as pd
 import pytest
-from flex_infer import GenerationParams
 
-from src.utils import clean_up, get_generation_params, read_data, save_output
+from src.utils import (
+    clean_up,
+    parquet_exists,
+    read_data,
+    read_model_predictions,
+    save_output,
+)
 
 
-def test_get_generation_params():
-    params = get_generation_params(temp=1, seed=42, max_tokens=64)
-    assert isinstance(params, GenerationParams)
-    assert params.temperature == 1
-    assert params.seed == 42
-    assert params.max_tokens == 64
+@mock.patch("src.utils.os.listdir", return_value=["file1.parquet", "file2.csv"])
+def test_parquet_exists_with_parquet(mock_listdir):
+    result = parquet_exists("./data/output")
+    assert result is True
+
+
+@mock.patch("src.utils.os.listdir", return_value=["file1.csv", "file2.txt"])
+def test_parquet_exists_without_parquet(mock_listdir):
+    result = parquet_exists("./data/output")
+    assert result is False
+
+
+@mock.patch("src.utils.os.listdir", return_value=[])
+def test_parquet_exists_empty_dir(mock_listdir):
+    result = parquet_exists("./data/output")
+    assert result is False
+
+
+@mock.patch("src.utils.os.listdir", return_value=["file1.parquet", "file2.parquet"])
+def test_parquet_exists_multiple_parquet(mock_listdir):
+    result = parquet_exists("./data/output")
+    assert result is True
 
 
 @mock.patch("src.utils.pd.DataFrame.to_parquet")
@@ -69,3 +90,27 @@ def test_read_data_parquet(mock_listdir, mock_read_parquet):
 
     mock_read_parquet.assert_called_once_with("./data/input/file.parquet")
     assert len(df) == 3
+
+
+@mock.patch("src.utils.pd.read_parquet")
+@mock.patch("src.utils.os.path.exists", return_value=True)
+def test_read_model_predictions_file_exists(mock_exists, mock_read_parquet):
+    mock_df = pd.DataFrame({"col1": [1, 2, 3]})
+    mock_read_parquet.return_value = mock_df
+
+    model_name = "test_model"
+    result = read_model_predictions(model_name)
+
+    mock_read_parquet.assert_called_once_with("./data/labeled_data_test_model.parquet")
+
+    assert result.equals(mock_df)
+
+
+@mock.patch("src.utils.os.path.exists", return_value=False)
+def test_read_model_predictions_file_not_found(mock_exists):
+    model_name = "non_existent_model"
+
+    with pytest.raises(
+        FileNotFoundError, match="Predictions file for non_existent_model not found"
+    ):
+        read_model_predictions(model_name)
