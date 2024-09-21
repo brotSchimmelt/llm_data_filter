@@ -1,25 +1,6 @@
 import os
 
 import pandas as pd
-from flex_infer import GenerationParams
-
-
-def get_generation_params(temp: int, seed: int = 42, max_tokens: int = 32) -> GenerationParams:
-    """Get the generation parameters for the model.
-
-    Args:
-        temp (int): Temperature for sampling.
-        seed (int, optional): Random seed for reproducibility. Defaults to 42.
-        max_tokens (int, optional): Maximum number of tokens to generate. Defaults to 32.
-
-    Returns:
-        GenerationParams: Generation parameters object.
-    """
-    return GenerationParams(
-        temperature=temp,
-        seed=seed,
-        max_tokens=max_tokens,
-    )
 
 
 def save_output(
@@ -92,3 +73,44 @@ def read_data() -> pd.DataFrame:
 
     print(f"Data loaded successfully, number of rows: {len(df)}")
     return df
+
+
+def read_model_predictions(model_name: str, prediction_dir: str = "./data/") -> pd.DataFrame:
+    """
+    Reads the model predictions from a parquet file.
+
+    Args:
+        model_name (str): Name of the model.
+        prediction_dir (str, optional): Path of the prediction files. Defaults to "./data/".
+
+    Raises:
+        FileNotFoundError: If the predictions file is not found.
+
+    Returns:
+        pd.DataFrame: DataFrame containing the model predictions.
+    """
+    file_name = f"labeled_data_{model_name}.parquet"
+    path = os.path.join(prediction_dir, file_name)
+
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Predictions file for {model_name} not found at {path}")
+
+    return pd.read_parquet(path)
+
+
+def parquet_exists(path: str = "./data/output") -> bool:
+    """Checks if a Parquet file exists in the specified directory.
+
+    Args:
+        path (str): The directory to check for Parquet files. Defaults to "./data/output".
+
+    Returns:
+        bool: True if a Parquet file exists, False otherwise.
+    """
+    files = os.listdir(path)
+
+    for file in files:
+        if file.endswith(".parquet"):
+            return True
+
+    return False
