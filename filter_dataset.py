@@ -3,13 +3,13 @@ import os
 from typing import List
 
 import pandas as pd
-from flex_infer import VLLM
+from flex_infer import VLLM, GenerationParams
 from icecream import ic
 
 from src.prompt_components import CLASSIFY_PROMPT, SYSTEM_PROMPT
+from src.settings import MAX_TOKENS, RANDOM_SEED
 from src.utils import (
     clean_up,
-    get_generation_params,
     read_data,
     save_output,
 )
@@ -36,19 +36,19 @@ def load_model(model_name: str, seed: int = 42) -> VLLM:
         "num_gpus": 1,
     }
 
-    if model_name == "mistral":
+    if model_name == "mistral-7b-v2":
         model_settings["name"] = "mistral-7b-v2"
         model_settings["model_path"] = "../models/mistral-7b-instruct-v02"
         model_settings["prompt_format"] = "llama2"
-    elif model_name == "llama-3.1":
+    elif model_name == "llama-3.1-8b":
         model_settings["name"] = "llama-3.1-8b"
         model_settings["model_path"] = "../models/llama3_1-8b-instruct"
         model_settings["prompt_format"] = "llama3"
-    elif model_name == "gemma-9b":
+    elif model_name == "gemma-2-9b":
         model_settings["name"] = "gemma-2-9b"
         model_settings["model_path"] = "../models/gemma-2-9b-it"
         model_settings["prompt_format"] = "gemma"
-    elif model_name == "gemma-27b":
+    elif model_name == "gemma-2-27b":
         model_settings["name"] = "gemma-2-27b"
         model_settings["model_path"] = "../models/gemma-2-27b-it"
         model_settings["prompt_format"] = "gemma"
@@ -56,7 +56,7 @@ def load_model(model_name: str, seed: int = 42) -> VLLM:
         model_settings["name"] = "gemma-2b"
         model_settings["model_path"] = "../models/gemma-2b-it"
         model_settings["prompt_format"] = "gemma"
-    elif model_name == "nemo":
+    elif model_name == "mistral-nemo-12b":
         model_settings["name"] = "mistral-nemo-12b"
         model_settings["model_path"] = "../models/mistral-nemo-instruct-12b"
         model_settings["prompt_format"] = "llama2"
@@ -105,7 +105,11 @@ def generate_output(
     """
     model = load_model(model_name)
 
-    generation_params = get_generation_params(temp=temp)
+    generation_params = GenerationParams(
+        temperature=temp,
+        seed=RANDOM_SEED,
+        max_tokens=MAX_TOKENS,
+    )
 
     prompts = get_prompts(df, columns_to_use, template=template)
 
@@ -157,7 +161,7 @@ def get_prompts(df: pd.DataFrame, columns_to_use: List[str], template: str) -> L
 def main(args: argparse.Namespace) -> None:
     clean_up(args.model_name)
 
-    # reads the dataset from data/input
+    # reads the dataset from ./data/input
     df = read_data()
 
     output = generate_output(args.model_name, df, COLUMNS, temp=0.0, template=PROMPT_TEMPLATE)
