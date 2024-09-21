@@ -61,6 +61,10 @@ def load_model(model_name: str, seed: int = 42) -> VLLM:
         model_settings["model_path"] = "../models/mistral-nemo-instruct-12b"
         model_settings["prompt_format"] = "llama2"
         model_settings["max_model_len"] = 8_192  # decrease context length to fit on 1 A100 80GB
+    elif model_name == "phi3-mini-4k":
+        model_settings["name"] = "phi3-mini-4k"
+        model_settings["model_path"] = "../models/phi3-mini-4k-instruct"
+        model_settings["prompt_format"] = "phi"
 
     else:
         raise ValueError(f"Model {model_name} not supported.")
