@@ -126,7 +126,7 @@ def generate_output(
         generation_params,
         choices=answer_choices,
         system_prompt=SYSTEM_PROMPT,
-        use_tqdm=True,
+        use_tqdm=USE_TQDM,
         return_type="str",
     )
 
@@ -177,6 +177,7 @@ def main(args: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
     ic.enable() if os.getenv("IC_DEBUG") == "True" else ic.disable()
+    USE_TQDM = os.getenv("USE_TQDM", "False") == "True"
 
     # set the columns to use for generating prompts
     COLUMNS = ["before_revision", "after_revision"]
