@@ -1,5 +1,4 @@
 import os
-from typing import List
 
 import pandas as pd
 from flex_infer import GenerationParams
@@ -23,27 +22,6 @@ def get_generation_params(
         seed=seed,
         max_tokens=max_tokens,
     )
-
-
-def get_prompts(df: pd.DataFrame, template: str) -> List[str]:
-    """Generate prompts based on the DataFrame and a template.
-
-    Args:
-        df (pd.DataFrame): Input DataFrame with revision data.
-        template (str): Template string for generating prompts.
-
-    Returns:
-        List[str]: List of formatted prompts.
-    """
-    before_revisions = df["before_revision"].tolist()
-    after_revisions = df["after_revision"].tolist()
-
-    prompts = []
-    for before, after in zip(before_revisions, after_revisions):
-        prompt = template.format(before_revision=before, after_revision=after)
-        prompts.append(prompt)
-
-    return prompts
 
 
 def save_output(
@@ -77,17 +55,43 @@ def clean_up(model_name: str) -> None:
         pass
 
 
-def read_data(path: str = "./data/new_dataset.parquet") -> pd.DataFrame:
-    """Read dataset from a given file path.
-
-    Args:
-        path (str, optional): Path to the dataset file. Defaults to "./data/new_dataset.parquet".
+def read_data() -> pd.DataFrame:
+    """Reads a single dataset from a hardcoded directory. The function ensures there is only one dataset
+    (CSV or Parquet) and raises an error if multiple dataset files are found.
 
     Returns:
         pd.DataFrame: Loaded dataset.
-    """
-    print(f"Reading data from {path} ...")
 
-    df = pd.read_parquet(path)
-    print("len(df)", len(df))
+    Raises:
+        ValueError: If more than one dataset file is found.
+    """
+    dir_path = "./data/input"
+
+    all_files = os.listdir(dir_path)
+
+    dataset_files = [
+        f for f in all_files if f.endswith(".csv") or f.endswith(".parquet")
+    ]
+
+    if len(dataset_files) > 1:
+        raise ValueError(
+            "Multiple dataset files found. "
+            f"Only one CSV or Parquet file should be present in {dir_path}."
+        )
+
+    if len(dataset_files) == 0:
+        raise ValueError(
+            f"No dataset file found. Ensure there is one CSV or Parquet file in {dir_path}."
+        )
+
+    dataset_file = os.path.join(dir_path, dataset_files[0])
+
+    print(f"Reading data from {dataset_file} ...")
+
+    if dataset_file.endswith(".csv"):
+        df = pd.read_csv(dataset_file)
+    elif dataset_file.endswith(".parquet"):
+        df = pd.read_parquet(dataset_file)
+
+    print(f"Data loaded successfully, number of rows: {len(df)}")
     return df
