@@ -61,8 +61,8 @@ This example would be classified as "bad" because both versions of the text are 
 
 Classify the following text pairs and think step by step about the quality of the text and remember the guidelines above:
 
-**Before**: {before_revision}
-**After**: {after_revision}
+**Before**: {}
+**After**: {}
 """
 
 
