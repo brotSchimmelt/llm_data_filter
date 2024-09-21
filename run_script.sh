@@ -24,6 +24,8 @@ export VLLM_ATTENTION_BACKEND=FLASHINFER  # for gemma
 
 python filter_dataset.py --model_name "$MODEL_NAME"
 
+python add_labels_to_dataset.py --model_name "$MODEL_NAME"
+
 # clean up the custom outlines cache directory
 if [ -d "$CACHE_DIR" ]; then
     echo "Cleaning up cache directory: $CACHE_DIR"
