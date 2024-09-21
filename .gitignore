@@ -166,6 +166,8 @@ data/*.parquet
 data/*.csv
 data/input/*.parquet
 data/input/*.csv
+data/output/*.parquet
+data/output/*.csv
 _*.sh
 _*.py
 _*.txt
