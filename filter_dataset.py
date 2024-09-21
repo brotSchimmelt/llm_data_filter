@@ -1,44 +1,18 @@
 import argparse
 import os
-from typing import List
 
 import pandas as pd
-from flex_infer import VLLM, GenerationParams
+from flex_infer import VLLM
 from icecream import ic
 
-from prompt_components import CLASSIFY_PROMPT, SYSTEM_PROMPT
-
-
-def parse_arguments() -> argparse.Namespace:
-    """Simple argument parser for the script."""
-    parser = argparse.ArgumentParser(
-        description="This script runs an experiment using the specified model and saves the data."
-    )
-    parser.add_argument(
-        "--model_name",
-        "-m",
-        type=str,
-        required=True,
-        help="The model name. It is required to run the experiment and to save the data.",
-    )
-
-    return parser.parse_args()
-
-
-def read_data(path: str = "./data/new_dataset.parquet") -> pd.DataFrame:
-    """Read dataset from a given file path.
-
-    Args:
-        path (str, optional): Path to the dataset file. Defaults to "./data/new_dataset.parquet".
-
-    Returns:
-        pd.DataFrame: Loaded dataset.
-    """
-    print(f"Reading data from {path} ...")
-
-    df = pd.read_parquet(path)
-    print("len(df)", len(df))
-    return df
+from src.prompt_components import CLASSIFY_PROMPT, SYSTEM_PROMPT
+from src.utils import (
+    clean_up,
+    get_generation_params,
+    get_prompts,
+    read_data,
+    save_output,
+)
 
 
 def load_model(model_name: str, seed: int = 42) -> VLLM:
@@ -82,7 +56,9 @@ def load_model(model_name: str, seed: int = 42) -> VLLM:
         model_settings["name"] = "mistral-nemo"
         model_settings["model_path"] = "../models/mistral-nemo-instruct-12b"
         model_settings["prompt_format"] = "llama2"
-        model_settings["max_model_len"] = 8192
+        model_settings["max_model_len"] = (
+            8_192  # decrease context length to fit on 1 A100 80GB
+        )
 
     else:
         raise ValueError(f"Model {model_name} not supported.")
@@ -90,28 +66,25 @@ def load_model(model_name: str, seed: int = 42) -> VLLM:
     return VLLM(**model_settings)
 
 
-def get_prompts(df: pd.DataFrame, template: str) -> List[str]:
-    """Generate prompts based on the DataFrame and a template.
+def parse_arguments() -> argparse.Namespace:
+    """Simple argument parser for the script."""
+    parser = argparse.ArgumentParser(
+        description="This script runs an experiment using the specified model and saves the data."
+    )
+    parser.add_argument(
+        "--model_name",
+        "-m",
+        type=str,
+        required=True,
+        help="The model name. It is required to run the experiment and to save the data.",
+    )
 
-    Args:
-        df (pd.DataFrame): Input DataFrame with revision data.
-        template (str): Template string for generating prompts.
-
-    Returns:
-        List[str]: List of formatted prompts.
-    """
-    before_revisions = df["before_revision"].tolist()
-    after_revisions = df["after_revision"].tolist()
-
-    prompts = []
-    for before, after in zip(before_revisions, after_revisions):
-        prompt = template.format(before_revision=before, after_revision=after)
-        prompts.append(prompt)
-
-    return prompts
+    return parser.parse_args()
 
 
-def generate_output(model: VLLM, df: pd.DataFrame, model_name: str) -> pd.DataFrame:
+def generate_output(
+    model: VLLM, df: pd.DataFrame, model_name: str, temp: float = 0.0
+) -> pd.DataFrame:
     """Generate model predictions and append them to the DataFrame.
 
     Args:
@@ -122,7 +95,7 @@ def generate_output(model: VLLM, df: pd.DataFrame, model_name: str) -> pd.DataFr
     Returns:
         pd.DataFrame: DataFrame with generated predictions.
     """
-    generation_params = get_generation_params(temp=0.0)
+    generation_params = get_generation_params(temp=temp)
 
     prompts = get_prompts(df, template=CLASSIFY_PROMPT)
 
@@ -146,65 +119,14 @@ def generate_output(model: VLLM, df: pd.DataFrame, model_name: str) -> pd.DataFr
     return df
 
 
-def get_generation_params(
-    temp: int, seed: int = 42, max_tokens: int = 32
-) -> GenerationParams:
-    """Get the generation parameters for the model.
-
-    Args:
-        temp (int): Temperature for sampling.
-        seed (int, optional): Random seed for reproducibility. Defaults to 42.
-        max_tokens (int, optional): Maximum number of tokens to generate. Defaults to 32.
-
-    Returns:
-        GenerationParams: Generation parameters object.
-    """
-    return GenerationParams(
-        temperature=temp,
-        seed=seed,
-        max_tokens=max_tokens,
-    )
-
-
-def save_output(
-    df: pd.DataFrame, model_name: str, path: str = "./data/labeled_data_{}.parquet"
-) -> None:
-    """Save the labeled data to a parquet file.
-
-    Args:
-        df (pd.DataFrame): DataFrame containing the data to save.
-        model_name (str): Model name to use in the filename.
-        path (str, optional): File path template for saving. Defaults to "./data/labeled_data_{}.parquet".
-    """
-    print("Saving labeled data ...")
-    output_path = path.format(model_name)
-
-    df.to_parquet(output_path, index=False)
-
-    print(f"Saved {len(df)} labeled examples to {output_path}")
-
-
-def clean_up(model_name: str) -> None:
-    """Clean up generated files for the given model.
-
-    Args:
-        model_name (str): Name of the model for which files should be deleted.
-    """
-    try:
-        os.remove(f"./data/labeled_data_{model_name}.parquet")
-        os.remove(f"./data/labeled_data_{model_name}.csv")
-    except FileNotFoundError:
-        pass
-
-
 def main(args: argparse.Namespace) -> None:
     clean_up(args.model_name)
 
-    df = read_data()
+    df = read_data("./data/input/revision_dataset.parquet")
 
     model = load_model(args.model_name)
 
-    output = generate_output(model, df, args.model_name)
+    output = generate_output(model, df, args.model_name, temp=0.0)
 
     save_output(output, args.model_name)
 
