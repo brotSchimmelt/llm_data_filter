@@ -60,9 +60,7 @@ def load_model(model_name: str, seed: int = 42) -> VLLM:
         model_settings["name"] = "mistral-nemo-12b"
         model_settings["model_path"] = "../models/mistral-nemo-instruct-12b"
         model_settings["prompt_format"] = "llama2"
-        model_settings["max_model_len"] = (
-            8_192  # decrease context length to fit on 1 A100 80GB
-        )
+        model_settings["max_model_len"] = 8_192  # decrease context length to fit on 1 A100 80GB
 
     else:
         raise ValueError(f"Model {model_name} not supported.")
@@ -131,9 +129,7 @@ def generate_output(
     return df
 
 
-def get_prompts(
-    df: pd.DataFrame, columns_to_use: List[str], template: str
-) -> List[str]:
+def get_prompts(df: pd.DataFrame, columns_to_use: List[str], template: str) -> List[str]:
     """Generate prompts based on the DataFrame and a template.
 
     Args:
@@ -164,9 +160,7 @@ def main(args: argparse.Namespace) -> None:
     # reads the dataset from data/input
     df = read_data()
 
-    output = generate_output(
-        args.model_name, df, COLUMNS, temp=0.0, template=PROMPT_TEMPLATE
-    )
+    output = generate_output(args.model_name, df, COLUMNS, temp=0.0, template=PROMPT_TEMPLATE)
 
     save_output(output, args.model_name)
 

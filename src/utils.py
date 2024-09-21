@@ -4,9 +4,7 @@ import pandas as pd
 from flex_infer import GenerationParams
 
 
-def get_generation_params(
-    temp: int, seed: int = 42, max_tokens: int = 32
-) -> GenerationParams:
+def get_generation_params(temp: int, seed: int = 42, max_tokens: int = 32) -> GenerationParams:
     """Get the generation parameters for the model.
 
     Args:
@@ -32,7 +30,8 @@ def save_output(
     Args:
         df (pd.DataFrame): DataFrame containing the data to save.
         model_name (str): Model name to use in the filename.
-        path (str, optional): File path template for saving. Defaults to "./data/labeled_data_{}.parquet".
+        path (str, optional): File path template for saving. Defaults to
+            "./data/labeled_data_{}.parquet".
     """
     print("Saving labeled data ...")
     output_path = path.format(model_name)
@@ -56,8 +55,8 @@ def clean_up(model_name: str) -> None:
 
 
 def read_data() -> pd.DataFrame:
-    """Reads a single dataset from a hardcoded directory. The function ensures there is only one dataset
-    (CSV or Parquet) and raises an error if multiple dataset files are found.
+    """Reads a single dataset from a hardcoded directory. The function ensures there is only one
+    dataset (CSV or Parquet) and raises an error if multiple dataset files are found.
 
     Returns:
         pd.DataFrame: Loaded dataset.
@@ -69,9 +68,7 @@ def read_data() -> pd.DataFrame:
 
     all_files = os.listdir(dir_path)
 
-    dataset_files = [
-        f for f in all_files if f.endswith(".csv") or f.endswith(".parquet")
-    ]
+    dataset_files = [f for f in all_files if f.endswith(".csv") or f.endswith(".parquet")]
 
     if len(dataset_files) > 1:
         raise ValueError(
