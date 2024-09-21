@@ -27,11 +27,3 @@ chmod +x run_script.sh
 
 ./run_script.sh <model_name>
 ```
-
-Different models:
-
-- Llama-3.1 8B
-- Mistral-v2 7B
-- Mistral-Nemo 12B
-- Gemma-2 2B
-- Gemma-2 27B
